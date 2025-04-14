@@ -6,14 +6,20 @@ import asyncio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
+from llm import myClient
+
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    level=logging.DEBUG
 )
+
+
+client = myClient()
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
@@ -21,15 +27,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text="I am an expense tracker bot. Just text me your expenses and I will take care of storing, sorting and analysing your regular expenses"
     )
 
-async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
-
-async def caps(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text_caps = ' '.join(context.args).upper()
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=text_caps)
-
-
-async def regular_expenses(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def recurring_expenses(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     command to add a regular expense to the current account. The message should contain:
     - amount
@@ -40,17 +38,30 @@ async def regular_expenses(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     pass
 
+async def handle_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    handles all other text messages by forwarding to model
+    """
+
+    message = update.message.text
+    sender = update.message.chat.first_name
+
+    logging.info(f"receiving message {message} from {sender}")
+
+    reply = await client.answer(message)
+
+    logging.info(f"this is the reply {reply}")
+
+    await update.message.reply_text(reply)
+
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(os.getenv("TELEGRAM_TOKEN")).build()
+
     start_handler = CommandHandler('start', start)
-    caps_handler = CommandHandler('caps', caps)
-    application.add_handler(start_handler)
-
-    echo_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), echo)
+    text_handler = MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_message)
 
     application.add_handler(start_handler)
-    application.add_handler(echo_handler)
-    application.add_handler(caps_handler) 
+    application.add_handler(text_handler)
 
     application.run_polling()
