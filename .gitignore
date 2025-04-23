@@ -2,3 +2,6 @@
 *.log
 Pipfile.lock
 __pycache__
+.sqlite
+.idea
+*.sqlite
