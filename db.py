@@ -14,19 +14,6 @@ logging.basicConfig(
 )
 
 
-def create_connection(path: str) -> sqlite3.Connection:
-    """
-
-    """
-    connection = None
-    try:
-        logger.info("creating sql database")
-        connection = sqlite3.connect(path)
-    except Error as e:
-        logger.debug(e)
-
-    return connection
-
 def execute_query(connection: sqlite3.Connection, query:str) -> None:
     """
 
@@ -50,41 +37,71 @@ def execute_read_query(connection, query):
     except Error as e:
         print(f"The error '{e}' occurred")
 
+def create_connection(path: str) -> sqlite3.Connection:
+    """
+
+    """
+    connection = None
+    try:
+        logger.info("creating sql database")
+        connection = sqlite3.connect(path)
+    except Error as e:
+        logger.debug(e)
+
+    return connection
+
+
+def create_records(conn):
+    logger.info("create records table")
+    execute_query(conn, """
+    CREATE TABLE IF NOT EXISTS records (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  person TEXT NOT NULL,
+  amount INTEGER,
+  date TEXT,
+  description TEXT,
+  category TEXT
+);
+""")
+
+
+def add_record(conn, person, amount, date, description, category):
+    logger.info(f"inserting {person, amount, date, description, category}")
+    execute_query(conn, f"""
+    INSERT INTO records(person, amount, date, description, category)
+VALUES ("{person}", {amount}, "{date}", "{description}", "{category}");
+""")
+
+def delete_record(conn, id):
+    logger.info(f"deleting {id}")
+    execute_query(conn, f"""
+DELETE FROM records
+WHERE id={id}
+""")
+
 
 if __name__=="__main__":
     # connect
     conn = create_connection("sm_app.sqlite")
 
-    # create table
-    query = """
-    CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  age INTEGER,
-  gender TEXT,
-  nationality TEXT
-);
-    """
-    execute_query(conn, query)
+    create_records(conn)
+    add_record(conn, "james", 123, "today", "de", "cat")
 
-    # create entry
-    create_users = """
-    INSERT INTO
-      users (name, age, gender, nationality)
-    VALUES
-      ('James', 25, 'male', 'USA'),
-      ('Leila', 32, 'female', 'France'),
-      ('Brigitte', 35, 'female', 'England'),
-      ('Mike', 40, 'male', 'Denmark'),
-      ('Elizabeth', 21, 'female', 'Canada');
-    """
-
-    execute_query(conn, create_users)
 
 
     # select records
-    select_users = "SELECT * from users"
+    select_users = "SELECT * from records"
     users = execute_read_query(conn, select_users)
 
     for user in users:
         print(user)
+
+    delete_record(conn, 2)
+
+    # select records
+    select_users = "SELECT * from records"
+    users = execute_read_query(conn, select_users)
+
+    for user in users:
+        print(user)
+

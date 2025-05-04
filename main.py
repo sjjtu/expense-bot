@@ -1,12 +1,13 @@
 import logging
 from dotenv import load_dotenv
 import os
-import asyncio
+import json
 
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 
 from llm import myClient
+from db import create_connection
 
 load_dotenv()
 
@@ -19,7 +20,9 @@ logging.basicConfig(
 
 
 client = myClient()
+db_conn = create_connection("sm_app.sqlite")
 
+tools = [json.load()]
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(

@@ -1,0 +1,21 @@
+{
+    "type": "function",
+    "function": {
+      "name": "delete_record",
+      "description": "Deletes a financial record from the database using its ID.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The unique identifier of the record to delete."
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "strict": true
+    }
+  }
