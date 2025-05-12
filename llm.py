@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    level=logging.DEBUG
 )
 
 class myClient():
@@ -16,7 +16,7 @@ class myClient():
     def __init__(self):
         self.client = OpenAI(base_url="http://127.0.0.1:1234/v1", api_key="lm-studio")
         self.SYSTEM_PROMPT = """\
-You are a helpful assistant that keeps track of the users expenses. Therefore, you can either create or delete expense records. Follow those steps:
+You are a helpful assistant that keeps track of the users expenses. Therefore, you can either create or delete expense records using the provided tools. Only use the provided functions. Do not invent new function names. Follow those steps:
 Step 1 - Find out based on the user message, whether you should create or delete expense records. If the user does not explicitly instruct you to delete a records, e. g. by asking you remove or delete a certain entry, always assume that you should create a new expense record.
 Step 2 - Based on Step 1, use one of the provided functions and infer the input parameters. If the user provided some information but you are unsure on how to interpret them, provide the user with two of the most likely interpretations and ask the user to choose which fits best or none.
 Step 3 - Summarise your action.
@@ -102,20 +102,24 @@ If the user message is about something else, simply reply with: You should find 
             }
         ]
 
-    def answer(self, message, **kwargs):
+    def answer(self, message, history=[], **kwargs):
 
+
+        history.extend(
+                    [{"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "user", "content": message}]
+        )
+        
         completion = self.client.chat.completions.create(
-            model="deepseek-r1-distill-qwen-7b",
-            messages=[
-                {"role": "system", "content": self.SYSTEM_PROMPT},
-                {"role": "user", "content": message}
-            ],
+            model="llama-3.2-1b-instruct",
+            messages=history,
             temperature=0.7,
-            tools=self.tools,
+            #tools=self.tools,
                 **kwargs
         )
 
-        logging.debug(completion)
+        #tool_call = completion.choices[0].message.tool_calls[0]
+        #logger.debug(tool_call)
         return completion.choices[0].message.content
 
 
