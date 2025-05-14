@@ -56,7 +56,7 @@ def create_records(conn):
     execute_query(conn, """
     CREATE TABLE IF NOT EXISTS records (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  person TEXT NOT NULL,
+  chat_id TEXT NOT NULL,
   amount INTEGER,
   date TEXT,
   description TEXT,
@@ -65,11 +65,11 @@ def create_records(conn):
 """)
 
 
-def add_record(conn, person, amount, date, description, category):
-    logger.info(f"inserting {person, amount, date, description, category}")
+def add_record(conn, chat_id, amount, date, description, category):
+    logger.info(f"inserting {chat_id, amount, date, description, category}")
     execute_query(conn, f"""
     INSERT INTO records(person, amount, date, description, category)
-VALUES ("{person}", {amount}, "{date}", "{description}", "{category}");
+VALUES ("{chat_id}", {amount}, "{date}", "{description}", "{category}");
 """)
 
 def delete_record(conn, id):
@@ -104,4 +104,3 @@ if __name__=="__main__":
 
     for user in users:
         print(user)
-

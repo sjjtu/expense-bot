@@ -32,32 +32,28 @@ If the user message is about something else, simply reply with: You should find 
                     "parameters": {
                         "type": "object",
                         "properties": {
-                        "person": {
-                            "type": "string",
-                            "description": "The name of the person involved in the transaction."
-                        },
-                        "amount": {
-                            "type": "number",
-                            "description": "The monetary amount of the transaction."
-                        },
-                        "date": {
-                            "type": "string",
-                            "format": "date",
-                            "description": "The date of the transaction in YYYY-MM-DD format."
-                        },
-                        "description": {
-                            "type": "string",
-                            "description": "A brief description of the transaction."
-                        },
-                        "category": {
-                            "type": "string",
-                            "description": "The category of the transaction (e.g., Food, Rent, Utilities)."
-                        }
+
+                            "amount": {
+                                "type": "number",
+                                "description": "The monetary amount of the transaction."
+                            },
+                            "date": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "The date of the transaction in YYYY-MM-DD format."
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "A brief description of the transaction."
+                            },
+                            "category": {
+                                "type": "string",
+                                "description": "The category of the transaction (e.g., Food, Rent, Utilities)."
+                            }
                         },
                         "required": [
-                        "person",
-                        "amount",
-                        "description",
+                            "amount",
+                            "description",
                         ],
                         "additionalProperties": False
                         },
@@ -109,7 +105,7 @@ If the user message is about something else, simply reply with: You should find 
                     [{"role": "system", "content": self.SYSTEM_PROMPT},
                     {"role": "user", "content": message}]
         )
-        
+
         completion = self.client.chat.completions.create(
             model="llama-3.2-1b-instruct",
             messages=history,
