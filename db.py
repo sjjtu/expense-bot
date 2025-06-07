@@ -23,9 +23,10 @@ def execute_query(connection: sqlite3.Connection, query:str) -> None:
         cursor.execute(query)
         connection.commit()
         logger.info("running query")
+        return 0
     except Error as e:
         logger.debug(e)
-
+        raise e
 
 def execute_read_query(connection, query):
     cursor = connection.cursor()
@@ -36,6 +37,20 @@ def execute_read_query(connection, query):
         return result
     except Error as e:
         print(f"The error '{e}' occurred")
+        raise e
+
+def create_records(conn):
+    logger.info("create records table")
+    execute_query(conn, """
+    CREATE TABLE IF NOT EXISTS records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id TEXT NOT NULL,
+    amount INTEGER,
+    date TEXT,
+    description TEXT,
+    category TEXT
+    );
+    """)
 
 def create_connection(path: str) -> sqlite3.Connection:
     """
@@ -45,30 +60,18 @@ def create_connection(path: str) -> sqlite3.Connection:
     try:
         logger.info("creating sql database")
         connection = sqlite3.connect(path)
+        create_records(connection)
     except Error as e:
         logger.debug(e)
+        raise e
 
     return connection
-
-
-def create_records(conn):
-    logger.info("create records table")
-    execute_query(conn, """
-    CREATE TABLE IF NOT EXISTS records (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  chat_id TEXT NOT NULL,
-  amount INTEGER,
-  date TEXT,
-  description TEXT,
-  category TEXT
-);
-""")
 
 
 def add_record(conn, chat_id, amount, date, description, category):
     logger.info(f"inserting {chat_id, amount, date, description, category}")
     execute_query(conn, f"""
-    INSERT INTO records(person, amount, date, description, category)
+    INSERT INTO records(chat_id, amount, date, description, category)
 VALUES ("{chat_id}", {amount}, "{date}", "{description}", "{category}");
 """)
 

@@ -7,7 +7,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters, DictPersistence
 
 from llm import myClient
-from db import create_connection
+from db import create_connection, add_record
 
 load_dotenv()
 
@@ -18,7 +18,8 @@ logging.basicConfig(
 )
 
 
-client = myClient()
+#client = myClient(api_key=os.getenv("OPENAI_API_KEY"), model="google/gemma-2-27b", base_url="http://127.0.0.1:1234/v1")
+client = myClient(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4.1")
 db_conn = create_connection("sm_app.sqlite")
 
 tools = []
@@ -53,8 +54,25 @@ def handle_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info(f"receiving message {message} from {sender}")
     logging.info(f"this the {context.chat_data=}")
     reply = client.answer(message, history)
+    answer = reply.content # get actual answer content
+
+    if not answer: # if answer is empty we are having a tool call
+        answer = "record is added"
 
     logging.info(f"this is the reply {reply}")
+
+    if reply.tool_calls[0]:
+        tool_call = reply.tool_calls[0]
+        args = json.loads(tool_call.function.arguments)
+        logger.debug(f"tool call is: {tool_call}")
+        if tool_call.function.name == "add_record":
+            try:
+                add_record(conn=db_conn, chat_id=update.effective_chat.id, amount=args["amount"], date=args["date"],
+                       description=args["description"], category=args["category"])
+            except Exception as e:
+                logger.debug(e)
+                answer = "something went wrong"
+
 
     # Get the current history or create a new list if it doesn't exist
 
@@ -67,14 +85,14 @@ def handle_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         },
         {
             "role": "system",
-            "content": reply
+            "content": answer
         }]
     )
 
     # Save the updated history back to chat_data
     context.chat_data["history"] = history
 
-    return update.message.reply_text(reply)
+    return update.message.reply_text(answer)
 
 
 if __name__ == '__main__':
